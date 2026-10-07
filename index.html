@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Matemaatika 5–6 klass · Трекер прогресса</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+</head>
+<body>
+
+  <!-- ── Header ──────────────────────────────────────────────────── -->
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="logo-group">
+        <div class="logo-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
+            <path d="M6 6h10"/><path d="M6 10h10"/><path d="m9 16 2 2 4-4"/>
+          </svg>
+        </div>
+        <div class="logo-text">
+          <span class="logo-main">Matemaatika</span>
+          <span class="logo-sub">5.–6. klass · EIS диагностика</span>
+        </div>
+      </div>
+
+      <div class="header-controls">
+        <button id="themeToggleBtn" class="hdr-btn" title="Сменить тему">
+          <svg id="themeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <circle cx="12" cy="12" r="5"/>
+            <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+          <span id="themeToggleText">Светлая</span>
+        </button>
+        <button id="resetProgressBtn" class="hdr-btn hdr-btn--danger">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+            <path d="M3 3v5h5"/>
+          </svg>
+          Сброс
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- ── Hero / Диагностика ──────────────────────────────────────── -->
+    <section class="hero-section">
+      <div class="hero-inner">
+        <div class="hero-left">
+          <div class="hero-eyebrow">
+            <span class="eyebrow-dot"></span>
+            Диагностический результат · EIS Teise kooliastme test
+          </div>
+          <h1 class="hero-title">Твой план<br>по математике</h1>
+          <p class="hero-desc">
+            Роадмап составлен по результатам государственного диагностического теста.
+            Устрани пробелы в дробях, геометрии и задачах — и выйди на <strong>85%+</strong>.
+          </p>
+
+          <div class="hero-stats">
+            <div class="hstat hstat--warn">
+              <div class="hstat-score">37%</div>
+              <div class="hstat-bar"><div class="hstat-bar-fill" style="width:37%"></div></div>
+              <div class="hstat-label">Mõistete tundmine, arvutamine</div>
+            </div>
+            <div class="hstat hstat--danger">
+              <div class="hstat-score">42%</div>
+              <div class="hstat-bar"><div class="hstat-bar-fill" style="width:42%"></div></div>
+              <div class="hstat-label">Probleemide lahendamine</div>
+            </div>
+            <div class="hstat hstat--success">
+              <div class="hstat-score">100%</div>
+              <div class="hstat-bar"><div class="hstat-bar-fill" style="width:100%"></div></div>
+              <div class="hstat-label">Pikkusühikute teisendamine</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-right">
+          <div class="progress-card">
+            <div class="progress-ring-wrap">
+              <svg class="progress-ring" width="140" height="140" viewBox="0 0 140 140">
+                <circle class="ring-bg" cx="70" cy="70" r="58" fill="none" stroke-width="10"/>
+                <circle id="overallProgressRing" class="ring-fill" cx="70" cy="70" r="58"
+                  fill="none" stroke-width="10"
+                  stroke-dasharray="364.42"
+                  stroke-dashoffset="364.42"
+                  stroke-linecap="round"
+                  transform="rotate(-90 70 70)"/>
+              </svg>
+              <div class="ring-label">
+                <div id="overallPercentage" class="ring-pct">0%</div>
+                <div class="ring-sub">прогресс</div>
+              </div>
+            </div>
+            <div class="progress-card-body">
+              <div class="pcb-title">Темы освоено</div>
+              <div id="topicsCounterBadge" class="pcb-counter">0 из 14</div>
+              <div class="pcb-pills">
+                <span class="pcb-pill pcb-pill--crit" id="pillCrit">🚨 0 / 7</span>
+                <span class="pcb-pill pcb-pill--warn" id="pillMed">⚠️ 0 / 2</span>
+                <span class="pcb-pill pcb-pill--task" id="pillTasks">📐 0 / 5</span>
+                <span class="pcb-pill pcb-pill--trainer" id="pillTrainer">🎯 0</span>
+              </div>
+              <p class="pcb-hint">Отмечай «Изучено» в каждой теме — прогресс сохраняется автоматически.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Toolbar / Filters ─────────────────────────────────────── -->
+    <section class="toolbar-section">
+      <div class="toolbar-inner">
+        <div class="search-wrap">
+          <svg class="search-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input type="text" id="searchInput" class="search-input" placeholder="Поиск: дроби, pindala, nurk, ruumala...">
+          <button id="clearSearchBtn" class="search-clear" style="display:none">✕</button>
+        </div>
+        <div class="filter-group" role="group">
+          <button class="f-tab active" data-filter="all">Все <span class="f-badge">14</span></button>
+          <button class="f-tab" data-filter="critical">🚨 Срочно <span class="f-badge">7</span></button>
+          <button class="f-tab" data-filter="medium">⚠️ Закрепить <span class="f-badge">2</span></button>
+          <button class="f-tab" data-filter="tasks">📐 Задачи <span class="f-badge">5</span></button>
+          <button class="f-tab" data-filter="uncompleted">⏳ Не изучено</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Topics ────────────────────────────────────────────────── -->
+    <section class="topics-wrap" id="topicsContainer"></section>
+
+    <!-- ── Quick-nav sidebar ─────────────────────────────────────── -->
+    <aside class="quick-nav" id="quickNav">
+      <div class="qn-header">
+        <span>Перейти</span>
+        <button id="quickNavToggle" class="qn-toggle">▲</button>
+      </div>
+      <nav class="qn-links" id="quickNavLinks"></nav>
+    </aside>
+
+  </main>
+
+  <footer class="app-footer">
+    <div class="footer-inner">
+      <p>© 2026 · Интерактивный трекер подготовки · 2. kooliaste · Eesti õppekava</p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
