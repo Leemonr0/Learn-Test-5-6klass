@@ -691,13 +691,19 @@ const TOPICS_DATA = [
 // ==========================================
 // 2. STATE MANAGEMENT & LOCAL STORAGE
 // ==========================================
-const STORAGE_KEY_PROGRESS = "math_roadmap_progress_sz";
-const STORAGE_KEY_TRAINER = "math_roadmap_trainer_sz";
-const STORAGE_KEY_THEME = "math_roadmap_theme_sz";
+const STORAGE_KEY_PROGRESS = "math_roadmap_progress_v2";
+const STORAGE_KEY_TRAINER = "math_roadmap_trainer_v2";
+const STORAGE_KEY_DRAFTS = "math_roadmap_drafts_v2";
+const STORAGE_KEY_THEME = "math_roadmap_theme_v2";
+const STORAGE_KEY_LASTSAVED = "math_roadmap_lastsaved_v2";
+const STORAGE_KEY_COLLAPSED = "math_roadmap_collapsed_v2";
 
 let state = {
   completedTopics: loadStoredCompleted(),
   solvedTasks: loadStoredTrainer(),
+  draftInputs: loadStoredDrafts(),
+  collapsedTopics: loadStoredCollapsed(),
+  lastSaved: loadStoredLastSaved(),
   currentFilter: "all",
   searchQuery: "",
   isDarkTheme: loadStoredTheme()
@@ -705,36 +711,188 @@ let state = {
 
 function loadStoredCompleted() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY_PROGRESS);
+    const raw = localStorage.getItem(STORAGE_KEY_PROGRESS) || localStorage.getItem("math_roadmap_progress_sz");
     if (raw) return JSON.parse(raw);
   } catch (e) {
     console.error("Failed to load progress from localStorage", e);
   }
-  // Default: mark top-15 as mastered because student got 100% on pikkusühikud in the test
   return ["top-15"];
+}
+
+function loadStoredTrainer() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_TRAINER) || localStorage.getItem("math_roadmap_trainer_sz");
+    if (raw) return JSON.parse(raw);
+  } catch (e) {
+    console.error("Failed to load trainer from localStorage", e);
+  }
+  return {};
+}
+
+function loadStoredDrafts() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_DRAFTS);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {
+    console.error("Failed to load drafts from localStorage", e);
+  }
+  return {};
+}
+
+function loadStoredCollapsed() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_COLLAPSED);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return []; // By default, all cards expanded
+}
+
+function saveCollapsed() {
+  try {
+    localStorage.setItem(STORAGE_KEY_COLLAPSED, JSON.stringify(state.collapsedTopics));
+  } catch (e) {}
+}
+
+function loadStoredLastSaved() {
+  try {
+    return localStorage.getItem(STORAGE_KEY_LASTSAVED) || null;
+  } catch (e) {
+    return null;
+  }
+}
+
+// ── Lightweight Confetti Particle Engine (Zero external dependencies) ──
+function triggerConfetti() {
+  const canvas = document.getElementById("confettiCanvas");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const particles = [];
+  const colors = ["#10b981", "#3b82f6", "#f59e0b", "#ec4899", "#8b5cf6", "#38bdf8", "#f43f5e"];
+  const particleCount = Math.min(window.innerWidth < 640 ? 55 : 90, 110);
+
+  for (let i = 0; i < particleCount; i++) {
+    particles.push({
+      x: window.innerWidth * (0.25 + Math.random() * 0.5),
+      y: window.innerHeight * 0.35,
+      vx: (Math.random() - 0.5) * 16,
+      vy: (Math.random() - 0.75) * 18,
+      size: Math.random() * 8 + 5,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      rotation: Math.random() * 360,
+      rSpeed: (Math.random() - 0.5) * 12,
+      alpha: 1,
+      gravity: 0.38
+    });
+  }
+
+  let animationFrame;
+  function render() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let active = false;
+
+    particles.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += p.gravity;
+      p.vx *= 0.98;
+      p.rotation += p.rSpeed;
+      p.alpha -= 0.013;
+
+      if (p.alpha > 0) {
+        active = true;
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.alpha);
+        ctx.translate(p.x, p.y);
+        ctx.rotate((p.rotation * Math.PI) / 180);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.65);
+        ctx.restore();
+      }
+    });
+
+    if (active) {
+      animationFrame = requestAnimationFrame(render);
+    } else {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      cancelAnimationFrame(animationFrame);
+    }
+  }
+  render();
+}
+
+function recordSaveTimestamp() {
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  state.lastSaved = timeStr;
+  try {
+    localStorage.setItem(STORAGE_KEY_LASTSAVED, timeStr);
+  } catch (e) {}
+  updateStorageStatusUI();
+}
+
+function indicateSavingAction() {
+  const badge = document.getElementById("headerSaveBadge");
+  const text = document.getElementById("headerSaveText");
+  if (badge && text) {
+    badge.classList.add("saving");
+    text.textContent = "Сохранено!";
+    setTimeout(() => {
+      badge.classList.remove("saving");
+      text.textContent = "Автосохранение";
+    }, 1200);
+  }
+}
+
+function updateStorageStatusUI() {
+  const detail = document.getElementById("storageDetailText");
+  const timeEl = document.getElementById("storageTimestamp");
+  if (detail) {
+    detail.textContent = "Автосохранение в браузере: готово";
+  }
+  if (timeEl) {
+    timeEl.textContent = state.lastSaved ? `(сохранено в ${state.lastSaved})` : "";
+  }
 }
 
 function saveCompleted() {
   try {
     localStorage.setItem(STORAGE_KEY_PROGRESS, JSON.stringify(state.completedTopics));
+    recordSaveTimestamp();
+    indicateSavingAction();
   } catch (e) {
     console.error(e);
   }
-}
-
-function loadStoredTrainer() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY_TRAINER);
-    if (raw) return JSON.parse(raw);
-  } catch (e) {
-    console.error(e);
-  }
-  return {};
 }
 
 function saveTrainer() {
   try {
     localStorage.setItem(STORAGE_KEY_TRAINER, JSON.stringify(state.solvedTasks));
+    recordSaveTimestamp();
+    indicateSavingAction();
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+function saveDrafts() {
+  try {
+    localStorage.setItem(STORAGE_KEY_DRAFTS, JSON.stringify(state.draftInputs));
+    recordSaveTimestamp();
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+function saveAllToStorage(showFeedback = true) {
+  try {
+    localStorage.setItem(STORAGE_KEY_PROGRESS, JSON.stringify(state.completedTopics));
+    localStorage.setItem(STORAGE_KEY_TRAINER, JSON.stringify(state.solvedTasks));
+    localStorage.setItem(STORAGE_KEY_DRAFTS, JSON.stringify(state.draftInputs));
+    recordSaveTimestamp();
+    if (showFeedback) indicateSavingAction();
   } catch (e) {
     console.error(e);
   }
@@ -742,16 +900,32 @@ function saveTrainer() {
 
 function loadStoredTheme() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY_THEME);
+    const raw = localStorage.getItem(STORAGE_KEY_THEME) || localStorage.getItem("math_roadmap_theme_sz");
     if (raw !== null) return raw === "dark";
   } catch (e) {}
-  return true; // default dark
+  return true;
 }
 
 function saveTheme(isDark) {
   try {
     localStorage.setItem(STORAGE_KEY_THEME, isDark ? "dark" : "light");
   } catch (e) {}
+}
+
+function showToast(message, icon = "✓", duration = 3000) {
+  const toast = document.getElementById("toastNotification");
+  const msgEl = document.getElementById("toastMessage");
+  const iconEl = document.getElementById("toastIcon");
+  if (!toast) return;
+
+  if (msgEl) msgEl.textContent = message;
+  if (iconEl) iconEl.textContent = icon;
+
+  toast.style.display = "flex";
+  clearTimeout(window.__toastTimer);
+  window.__toastTimer = setTimeout(() => {
+    toast.style.display = "none";
+  }, duration);
 }
 
 // ==========================================
@@ -785,6 +959,16 @@ function renderApp() {
   renderTopics();
   updateProgressUI();
   renderQuickNav();
+  updateStorageStatusUI();
+}
+
+function captureCurrentInputs() {
+  document.querySelectorAll(".task-input").forEach(input => {
+    const taskId = input.id.replace("input_", "");
+    if (taskId && input.value !== undefined) {
+      state.draftInputs[taskId] = input.value;
+    }
+  });
 }
 
 function renderTopics() {
@@ -822,6 +1006,7 @@ function renderTopics() {
     let tasksHtml = "";
     topic.tasks.forEach((task, tIdx) => {
       const solved = state.solvedTasks[task.id];
+      const currentVal = solved ? solved.userAnswer : (state.draftInputs[task.id] || "");
       const fbClass = solved ? (solved.isCorrect ? "correct" : "incorrect") : "";
       const fbContent = solved
         ? (solved.isCorrect
@@ -832,19 +1017,23 @@ function renderTopics() {
         <div class="task-item" id="task_wrap_${task.id}">
           <div class="task-prompt">Задача ${tIdx + 1}: ${task.prompt}</div>
           <div class="task-row">
-            <input type="text" class="task-input" id="input_${task.id}"
+            <input type="text" inputmode="decimal" class="task-input" id="input_${task.id}"
               placeholder="Твой ответ…"
-              value="${solved ? solved.userAnswer : ''}"
-              autocomplete="off">
+              value="${currentVal}"
+              autocomplete="off"
+              autocapitalize="off"
+              spellcheck="false">
             <button class="btn-check" onclick="checkTaskAnswer('${topic.id}','${task.id}')">Проверить</button>
           </div>
           <div class="task-feedback ${fbClass}" id="feedback_${task.id}">${fbContent}</div>
         </div>`;
     });
 
+    const isCollapsed = state.collapsedTopics.includes(topic.id);
+
     html += `
-      <article class="topic-card ${isCompleted ? "completed" : ""}" id="${topic.id}">
-        <header class="card-header">
+      <article class="topic-card ${isCompleted ? "completed" : ""} ${isCollapsed ? "collapsed" : ""}" id="${topic.id}">
+        <header class="card-header" onclick="toggleTopicAccordion('${topic.id}', event)">
           <div class="card-meta">
             <div class="card-badges">
               <span class="pri-badge ${topic.category}">${topic.categoryBadge}</span>
@@ -853,10 +1042,15 @@ function renderTopics() {
             <h3 class="card-title">${topic.titleRu}</h3>
             <p class="card-title-ee">${topic.titleEe}</p>
           </div>
-          <label class="mastered-label ${isCompleted ? "checked" : ""}" title="Отметить тему как изученную">
-            <input type="checkbox" onchange="toggleTopicComplete('${topic.id}', this.checked)" ${isCompleted ? "checked" : ""}>
-            <span>${isCompleted ? "✓ Освоено" : "Изучено"}</span>
-          </label>
+          <div class="card-actions-group">
+            <label class="mastered-label ${isCompleted ? "checked" : ""}" onclick="event.stopPropagation()" title="Отметить тему как изученную">
+              <input type="checkbox" onchange="toggleTopicComplete('${topic.id}', this.checked)" ${isCompleted ? "checked" : ""}>
+              <span>${isCompleted ? "✓ Освоено" : "Изучено"}</span>
+            </label>
+            <button class="accordion-toggle-btn" aria-label="Свернуть/развернуть тему" onclick="toggleTopicAccordion('${topic.id}', event)">
+              <svg class="accordion-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+          </div>
         </header>
 
         <div class="card-body">
@@ -942,12 +1136,20 @@ function updateProgressUI() {
   const circle = document.getElementById("overallProgressRing");
   const percentageLabel = document.getElementById("overallPercentage");
   if (circle && percentageLabel) {
-    const circumference = 2 * Math.PI * 42; // ~263.89
+    const circumference = 2 * Math.PI * 58; // r=58
     const offset = circumference - (percentage / 100) * circumference;
     circle.style.strokeDasharray = `${circumference} ${circumference}`;
     circle.style.strokeDashoffset = offset;
     percentageLabel.textContent = `${percentage}%`;
   }
+
+  // Update sticky header live progress in real-time
+  const headerPct = document.getElementById("headerProgressPct");
+  const headerBar = document.getElementById("headerProgressBar");
+  const headerBottom = document.getElementById("headerBottomProgressFill");
+  if (headerPct) headerPct.textContent = `${percentage}%`;
+  if (headerBar) headerBar.style.width = `${percentage}%`;
+  if (headerBottom) headerBottom.style.width = `${percentage}%`;
 
   // Counter badge
   const counterBadge = document.getElementById("topicsCounterBadge");
@@ -994,6 +1196,7 @@ function renderQuickNav() {
 // 5. INTERACTIVE ACTIONS (CHECKBOX & TASKS)
 // ==========================================
 window.toggleTopicComplete = function(topicId, isChecked) {
+  captureCurrentInputs();
   if (isChecked) {
     if (!state.completedTopics.includes(topicId)) state.completedTopics.push(topicId);
   } else {
@@ -1003,6 +1206,7 @@ window.toggleTopicComplete = function(topicId, isChecked) {
   renderTopics();
   updateProgressUI();
   renderQuickNav();
+  updateAccordionBulkBtn();
 };
 
 window.checkTaskAnswer = function(topicId, taskId) {
@@ -1012,6 +1216,8 @@ window.checkTaskAnswer = function(topicId, taskId) {
 
   const userVal = input.value.trim().toLowerCase().replace(/\s+/g, " ");
   if (!userVal) {
+    input.classList.add("input-incorrect");
+    setTimeout(() => input.classList.remove("input-incorrect"), 500);
     feedback.className = "task-feedback incorrect";
     feedback.innerHTML = "Пожалуйста, введи ответ в поле выше.";
     return;
@@ -1028,11 +1234,16 @@ window.checkTaskAnswer = function(topicId, taskId) {
   });
 
   state.solvedTasks[taskId] = { isCorrect: isMatch, userAnswer: input.value.trim() };
+  state.draftInputs[taskId] = input.value.trim();
   saveTrainer();
 
   if (isMatch) {
+    input.classList.remove("input-incorrect");
+    input.classList.add("input-correct");
+    triggerConfetti();
+
     feedback.className = "task-feedback correct";
-    feedback.innerHTML = `🎉 <strong>Верно!</strong><div class="feedback-sub">${task.explanation}</div>`;
+    feedback.innerHTML = `🎉 <strong>Верно! Отлично!</strong><div class="feedback-sub">${task.explanation}</div>`;
 
     const allSolved = topic.tasks.every(tk => state.solvedTasks[tk.id]?.isCorrect);
     if (allSolved && !state.completedTopics.includes(topicId)) {
@@ -1043,13 +1254,69 @@ window.checkTaskAnswer = function(topicId, taskId) {
       renderQuickNav();
     }
   } else {
+    input.classList.remove("input-correct");
+    input.classList.add("input-incorrect");
+    setTimeout(() => {
+      input.classList.remove("input-incorrect");
+    }, 550);
+
     feedback.className = "task-feedback incorrect";
     feedback.innerHTML = `❌ <strong>Не совсем так.</strong><div class="feedback-sub">Подсказка: ${task.explanation}</div>`;
   }
   updateProgressUI();
 };
 
+// ── Accordion Collapsible Cards Controls ──
+window.toggleTopicAccordion = function(topicId, event) {
+  if (event && (event.target.closest(".mastered-label") || event.target.tagName === "INPUT" || event.target.tagName === "A")) {
+    return;
+  }
+  const card = document.getElementById(topicId);
+  if (!card) return;
+
+  const isNowCollapsed = card.classList.toggle("collapsed");
+  if (isNowCollapsed) {
+    if (!state.collapsedTopics.includes(topicId)) state.collapsedTopics.push(topicId);
+  } else {
+    state.collapsedTopics = state.collapsedTopics.filter(id => id !== topicId);
+  }
+  saveCollapsed();
+  updateAccordionBulkBtn();
+};
+
+window.toggleAllAccordions = function() {
+  const allCards = document.querySelectorAll(".topic-card");
+  const allCollapsed = Array.from(allCards).every(c => c.classList.contains("collapsed"));
+
+  if (allCollapsed) {
+    allCards.forEach(c => c.classList.remove("collapsed"));
+    state.collapsedTopics = [];
+  } else {
+    allCards.forEach(c => c.classList.add("collapsed"));
+    state.collapsedTopics = TOPICS_DATA.map(t => t.id);
+  }
+  saveCollapsed();
+  updateAccordionBulkBtn();
+};
+
+function updateAccordionBulkBtn() {
+  const btnText = document.getElementById("accordionToggleText");
+  const btnIcon = document.getElementById("accordionToggleIcon");
+  const allCards = document.querySelectorAll(".topic-card");
+  if (!btnText || allCards.length === 0) return;
+
+  const allCollapsed = Array.from(allCards).every(c => c.classList.contains("collapsed"));
+  if (allCollapsed) {
+    btnText.textContent = "Развернуть все";
+    if (btnIcon) btnIcon.textContent = "▸";
+  } else {
+    btnText.textContent = "Свернуть все";
+    if (btnIcon) btnIcon.textContent = "▾";
+  }
+}
+
 window.resetFilters = function() {
+  captureCurrentInputs();
   state.currentFilter = "all";
   state.searchQuery = "";
   const searchInput = document.getElementById("searchInput");
@@ -1062,30 +1329,169 @@ window.resetFilters = function() {
 };
 
 // ==========================================
-// 6. EVENT LISTENERS
+// 6. SAVE, RESET & BACKUP MODALS
+// ==========================================
+window.performManualSave = function() {
+  captureCurrentInputs();
+  saveAllToStorage(true);
+  showToast("Все данные успешно сохранены в памяти браузера!", "💾");
+};
+
+// Reset Modal Controls
+window.openResetModal = function() {
+  const modal = document.getElementById("resetModal");
+  if (modal) modal.style.display = "flex";
+};
+
+window.closeResetModal = function() {
+  const modal = document.getElementById("resetModal");
+  if (modal) modal.style.display = "none";
+};
+
+window.confirmResetAction = function() {
+  const selected = document.querySelector('input[name="resetMode"]:checked')?.value || "all";
+
+  if (selected === "trainer") {
+    state.solvedTasks = {};
+    state.draftInputs = {};
+    saveAllToStorage(false);
+    renderTopics();
+    updateProgressUI();
+    showToast("Ответы в тренажёре очищены", "🔄");
+  } else if (selected === "topics") {
+    state.completedTopics = ["top-15"];
+    saveAllToStorage(false);
+    renderTopics();
+    updateProgressUI();
+    renderQuickNav();
+    showToast("Галочки изученных тем сброшены", "📋");
+  } else if (selected === "all") {
+    state.completedTopics = ["top-15"];
+    state.solvedTasks = {};
+    state.draftInputs = {};
+    saveAllToStorage(false);
+    renderTopics();
+    updateProgressUI();
+    renderQuickNav();
+    showToast("Весь прогресс полностью сброшен", "⚠️");
+  }
+
+  closeResetModal();
+};
+
+// Backup / Export / Import Modal Controls
+window.openBackupModal = function() {
+  const modal = document.getElementById("backupModal");
+  if (modal) modal.style.display = "flex";
+};
+
+window.closeBackupModal = function() {
+  const modal = document.getElementById("backupModal");
+  if (modal) modal.style.display = "none";
+};
+
+window.exportDataToFile = function() {
+  captureCurrentInputs();
+  saveAllToStorage(false);
+
+  const payload = {
+    version: "2.0",
+    appName: "Matemaatika 2. kooliaste Roadmap",
+    exportedAt: new Date().toISOString(),
+    completedTopics: state.completedTopics,
+    solvedTasks: state.solvedTasks,
+    draftInputs: state.draftInputs
+  };
+
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(payload, null, 2));
+  const dlAnchor = document.createElement("a");
+  const dateStr = new Date().toISOString().split("T")[0];
+  dlAnchor.setAttribute("href", dataStr);
+  dlAnchor.setAttribute("download", `math_roadmap_progress_${dateStr}.json`);
+  document.body.appendChild(dlAnchor);
+  dlAnchor.click();
+  dlAnchor.remove();
+
+  showToast("Файл прогресса успешно скачан!", "📥");
+};
+
+window.importDataFromFile = function(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      if (Array.isArray(parsed.completedTopics)) {
+        state.completedTopics = parsed.completedTopics;
+      }
+      if (parsed.solvedTasks && typeof parsed.solvedTasks === "object") {
+        state.solvedTasks = parsed.solvedTasks;
+      }
+      if (parsed.draftInputs && typeof parsed.draftInputs === "object") {
+        state.draftInputs = parsed.draftInputs;
+      }
+      saveAllToStorage(true);
+      renderTopics();
+      updateProgressUI();
+      renderQuickNav();
+      closeBackupModal();
+      showToast("Прогресс успешно загружен из файла!", "🎉");
+    } catch (err) {
+      alert("Ошибка при чтении файла. Убедись, что это корректный .json файл прогресса.");
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = "";
+};
+
+// ==========================================
+// 7. EVENT LISTENERS
 // ==========================================
 function setupEventListeners() {
+  // Theme Toggle
   const themeToggleBtn = document.getElementById("themeToggleBtn");
   if (themeToggleBtn) themeToggleBtn.addEventListener("click", toggleTheme);
 
-  const resetBtn = document.getElementById("resetProgressBtn");
-  if (resetBtn) {
-    resetBtn.addEventListener("click", () => {
-      if (confirm("Сбросить весь сохранённый прогресс и решения тренажера?")) {
-        state.completedTopics = ["top-15"];
-        state.solvedTasks = {};
-        saveCompleted();
-        saveTrainer();
-        renderTopics();
-        updateProgressUI();
-        renderQuickNav();
-      }
-    });
-  }
+  // Manual save buttons (header + hero progress card)
+  const manualSaveBtn = document.getElementById("manualSaveBtn");
+  if (manualSaveBtn) manualSaveBtn.addEventListener("click", performManualSave);
+  const cardSaveBtn = document.getElementById("cardSaveBtn");
+  if (cardSaveBtn) cardSaveBtn.addEventListener("click", performManualSave);
+
+  // Reset modal open buttons (header + hero card)
+  const openResetBtn = document.getElementById("openResetModalBtn");
+  if (openResetBtn) openResetBtn.addEventListener("click", openResetModal);
+  const cardResetBtn = document.getElementById("cardResetBtn");
+  if (cardResetBtn) cardResetBtn.addEventListener("click", openResetModal);
+
+  // Backup modal open buttons (header + hero card)
+  const openBackupBtn = document.getElementById("openBackupModalBtn");
+  if (openBackupBtn) openBackupBtn.addEventListener("click", openBackupModal);
+  const cardBackupBtn = document.getElementById("cardBackupBtn");
+  if (cardBackupBtn) cardBackupBtn.addEventListener("click", openBackupModal);
+
+  // Close modals on backdrop click
+  document.getElementById("resetModal")?.addEventListener("click", (e) => {
+    if (e.target.id === "resetModal") closeResetModal();
+  });
+  document.getElementById("backupModal")?.addEventListener("click", (e) => {
+    if (e.target.id === "backupModal") closeBackupModal();
+  });
+
+  // Close modals on Escape key
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      closeResetModal();
+      closeBackupModal();
+    }
+  });
 
   // Filter tabs
   document.querySelectorAll(".f-tab").forEach(tab => {
     tab.addEventListener("click", () => {
+      captureCurrentInputs();
       document.querySelectorAll(".f-tab").forEach(t => t.classList.remove("active"));
       tab.classList.add("active");
       state.currentFilter = tab.dataset.filter;
@@ -1098,6 +1504,7 @@ function setupEventListeners() {
   const clearSearchBtn = document.getElementById("clearSearchBtn");
   if (searchInput) {
     searchInput.addEventListener("input", (e) => {
+      captureCurrentInputs();
       state.searchQuery = e.target.value;
       if (clearSearchBtn) clearSearchBtn.style.display = state.searchQuery ? "block" : "none";
       renderTopics();
@@ -1105,6 +1512,7 @@ function setupEventListeners() {
   }
   if (clearSearchBtn) {
     clearSearchBtn.addEventListener("click", () => {
+      captureCurrentInputs();
       if (searchInput) { searchInput.value = ""; state.searchQuery = ""; }
       clearSearchBtn.style.display = "none";
       renderTopics();
@@ -1121,9 +1529,29 @@ function setupEventListeners() {
     });
   }
 
-  // Enter in trainer inputs
+  // Toggle all accordions mass button
+  const toggleAllAccordionsBtn = document.getElementById("toggleAllAccordionsBtn");
+  if (toggleAllAccordionsBtn) {
+    toggleAllAccordionsBtn.addEventListener("click", toggleAllAccordions);
+  }
+
+  // Real-time task input typing: auto-save drafts + Enter key support
   const topicsContainer = document.getElementById("topicsContainer");
   if (topicsContainer) {
+    topicsContainer.addEventListener("input", (e) => {
+      if (e.target.classList.contains("task-input")) {
+        e.target.classList.remove("input-correct", "input-incorrect");
+        const taskId = e.target.id.replace("input_", "");
+        if (taskId) {
+          state.draftInputs[taskId] = e.target.value;
+          clearTimeout(window.__draftTimer);
+          window.__draftTimer = setTimeout(() => {
+            saveDrafts();
+          }, 350);
+        }
+      }
+    });
+
     topicsContainer.addEventListener("keydown", (e) => {
       if (e.key === "Enter" && e.target.classList.contains("task-input")) {
         const taskId = e.target.id.replace("input_", "");
@@ -1133,6 +1561,9 @@ function setupEventListeners() {
     });
   }
 
-  window.addEventListener("load", () => triggerMathRender());
+  window.addEventListener("load", () => {
+    triggerMathRender();
+    updateAccordionBulkBtn();
+  });
 }
 

@@ -30,25 +30,68 @@
         </div>
       </div>
 
+      <!-- Sticky Header Live Progress Indicator -->
+      <div class="header-live-progress" id="headerLiveProgress" title="Общий прогресс освоения">
+        <div class="live-progress-info">
+          <span class="live-progress-label">Прогресс:</span>
+          <span class="live-progress-pct" id="headerProgressPct">0%</span>
+        </div>
+        <div class="live-progress-bar">
+          <div class="live-progress-fill" id="headerProgressBar" style="width: 0%;"></div>
+        </div>
+      </div>
+
       <div class="header-controls">
+        <!-- Save indicator -->
+        <div class="save-indicator" id="headerSaveBadge" title="Все изменения сохраняются в браузере">
+          <span class="save-dot"></span>
+          <span id="headerSaveText">Автосохранение</span>
+        </div>
+
+        <!-- Manual save button -->
+        <button id="manualSaveBtn" class="hdr-btn hdr-btn--save" title="Принудительно сохранить сейчас">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+            <polyline points="17 21 17 13 7 13 7 21"/>
+            <polyline points="7 3 7 8 15 8"/>
+          </svg>
+          <span class="btn-text-desktop">Сохранить</span>
+        </button>
+
+        <!-- Backup & File button -->
+        <button id="openBackupModalBtn" class="hdr-btn" title="Резервная копия: скачать или восстановить файл">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          <span class="btn-text-desktop">Файл</span>
+        </button>
+
+        <!-- Reset button -->
+        <button id="openResetModalBtn" class="hdr-btn hdr-btn--danger" title="Открыть меню сброса прогресса">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+            <path d="M3 3v5h5"/>
+          </svg>
+          <span class="btn-text-desktop">Сброс</span>
+        </button>
+
+        <!-- Theme toggle -->
         <button id="themeToggleBtn" class="hdr-btn" title="Сменить тему">
-          <svg id="themeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <svg id="themeIcon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <circle cx="12" cy="12" r="5"/>
             <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
             <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
             <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
             <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
           </svg>
-          <span id="themeToggleText">Светлая</span>
-        </button>
-        <button id="resetProgressBtn" class="hdr-btn hdr-btn--danger">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
-            <path d="M3 3v5h5"/>
-          </svg>
-          Сброс
+          <span id="themeToggleText" class="btn-text-desktop">Светлая</span>
         </button>
       </div>
+    </div>
+    <div class="header-bottom-tracker">
+      <div class="header-bottom-fill" id="headerBottomProgressFill" style="width: 0%;"></div>
     </div>
   </header>
 
@@ -113,7 +156,33 @@
                 <span class="pcb-pill pcb-pill--task" id="pillTasks">📐 0 / 5</span>
                 <span class="pcb-pill pcb-pill--trainer" id="pillTrainer">🎯 0</span>
               </div>
-              <p class="pcb-hint">Отмечай «Изучено» в каждой теме — прогресс сохраняется автоматически.</p>
+              <p class="pcb-hint">Отмечай «Изучено» и решай задачи — прогресс сохраняется мгновенно.</p>
+
+              <!-- Storage & Reset interactive control box -->
+              <div class="storage-box">
+                <div class="storage-status-line">
+                  <div class="storage-status-indicator">
+                    <span class="storage-led"></span>
+                    <span id="storageDetailText">Автосохранение в браузере: готово</span>
+                  </div>
+                  <span id="storageTimestamp" class="storage-time"></span>
+                </div>
+                <div class="storage-buttons">
+                  <button id="cardSaveBtn" class="btn-storage btn-storage--save" title="Принудительно сохранить данные">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                    Сохранить
+                  </button>
+                  <button id="cardBackupBtn" class="btn-storage" title="Экспорт/Импорт файла .json">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Файл
+                  </button>
+                  <button id="cardResetBtn" class="btn-storage btn-storage--danger" title="Сбросить прогресс">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                    Сбросить
+                  </button>
+                </div>
+              </div>
+
             </div>
           </div>
         </div>
@@ -132,10 +201,14 @@
         </div>
         <div class="filter-group" role="group">
           <button class="f-tab active" data-filter="all">Все <span class="f-badge">14</span></button>
-          <button class="f-tab" data-filter="critical">🚨 Срочно <span class="f-badge">7</span></button>
-          <button class="f-tab" data-filter="medium">⚠️ Закрепить <span class="f-badge">2</span></button>
-          <button class="f-tab" data-filter="tasks">📐 Задачи <span class="f-badge">5</span></button>
+          <button class="f-tab f-tab--crit" data-filter="critical">🚨 Срочно подтянуть (Красные) <span class="f-badge">7</span></button>
+          <button class="f-tab f-tab--warn" data-filter="medium">⚠️ Закрепить (Желтые) <span class="f-badge">2</span></button>
+          <button class="f-tab f-tab--task" data-filter="tasks">📐 Только задачи <span class="f-badge">5</span></button>
           <button class="f-tab" data-filter="uncompleted">⏳ Не изучено</button>
+          <button id="toggleAllAccordionsBtn" class="f-tab f-tab--action" title="Свернуть или развернуть все темы">
+            <span id="accordionToggleIcon">▾</span>
+            <span id="accordionToggleText">Свернуть все</span>
+          </button>
         </div>
       </div>
     </section>
@@ -154,11 +227,135 @@
 
   </main>
 
+  <!-- ── Footer ─────────────────────────────────────────────────── -->
   <footer class="app-footer">
     <div class="footer-inner">
       <p>© 2026 · Интерактивный трекер подготовки · 2. kooliaste · Eesti õppekava</p>
+      <p class="footer-note">Все действия и ответы сохраняются автоматически в хранилище твоего браузера (localStorage).</p>
     </div>
   </footer>
+
+  <!-- ── MODAL: Reset Progress ──────────────────────────────────── -->
+  <div id="resetModal" class="modal-backdrop" style="display: none;">
+    <div class="modal-window">
+      <div class="modal-header">
+        <div class="modal-icon-badge modal-icon-badge--danger">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+            <path d="M3 3v5h5"/>
+          </svg>
+        </div>
+        <div>
+          <h3 class="modal-title">Сброс прогресса</h3>
+          <p class="modal-subtitle">Выбери, что именно ты хочешь очистить</p>
+        </div>
+        <button class="modal-close" onclick="closeResetModal()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="reset-choices">
+          <label class="reset-choice-card">
+            <input type="radio" name="resetMode" value="trainer" checked>
+            <div class="choice-text">
+              <span class="choice-title">🎯 Сбросить только ответы тренажёра</span>
+              <span class="choice-desc">Очистит твои ответы и статус проверки задач. Все галочки «Изучено» останутся на месте.</span>
+            </div>
+          </label>
+
+          <label class="reset-choice-card">
+            <input type="radio" name="resetMode" value="topics">
+            <div class="choice-text">
+              <span class="choice-title">📋 Сбросить только галочки «Изучено»</span>
+              <span class="choice-desc">Снимет галочки прохождения тем. Ответы тренажёра останутся сохранёнными.</span>
+            </div>
+          </label>
+
+          <label class="reset-choice-card reset-choice-card--danger">
+            <input type="radio" name="resetMode" value="all">
+            <div class="choice-text">
+              <span class="choice-title">⚠️ Полный сброс (все данные)</span>
+              <span class="choice-desc">Удалит все ответы, снимет все галочки и вернет сайт к начальному результату теста.</span>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeResetModal()">Отмена</button>
+        <button class="btn btn-danger" onclick="confirmResetAction()">Сбросить выбранное</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MODAL: Backup / Export / Import ────────────────────────── -->
+  <div id="backupModal" class="modal-backdrop" style="display: none;">
+    <div class="modal-window">
+      <div class="modal-header">
+        <div class="modal-icon-badge modal-icon-badge--primary">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+            <polyline points="17 21 17 13 7 13 7 21"/>
+            <polyline points="7 3 7 8 15 8"/>
+          </svg>
+        </div>
+        <div>
+          <h3 class="modal-title">Резервная копия и синхронизация</h3>
+          <p class="modal-subtitle">Сохрани файл на диск или восстанови прогресс</p>
+        </div>
+        <button class="modal-close" onclick="closeBackupModal()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="backup-grid">
+          <!-- Export -->
+          <div class="backup-tile">
+            <div class="backup-tile-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              Экспорт (Сохранить в файл)
+            </div>
+            <p class="backup-tile-desc">Скачай легкий файл <code>.json</code> со своими результатами, чтобы перенести прогресс на планшет, телефон или сохранить копию.</p>
+            <button class="btn btn-primary" onclick="exportDataToFile()">
+              Скачать файл прогресса (.json)
+            </button>
+          </div>
+
+          <!-- Import -->
+          <div class="backup-tile">
+            <div class="backup-tile-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+              Импорт (Загрузить из файла)
+            </div>
+            <p class="backup-tile-desc">Загрузи ранее сохраненный файл <code>.json</code>, чтобы мгновенно восстановить все галочки и решения задач.</p>
+            <input type="file" id="importFileHiddenInput" accept=".json" style="display:none" onchange="importDataFromFile(event)">
+            <button class="btn btn-secondary" onclick="document.getElementById('importFileHiddenInput').click()">
+              Выбрать файл для загрузки
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeBackupModal()">Закрыть</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TOAST NOTIFICATION ─────────────────────────────────────── -->
+  <div id="toastNotification" class="toast-bubble" style="display: none;">
+    <span class="toast-icon" id="toastIcon">✓</span>
+    <span class="toast-message" id="toastMessage">Прогресс сохранён</span>
+  </div>
+
+  <!-- ── CANVAS: Success Confetti ───────────────────────────────── -->
+  <canvas id="confettiCanvas" class="confetti-canvas"></canvas>
 
   <script src="app.js"></script>
 </body>
